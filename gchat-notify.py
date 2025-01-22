@@ -10,15 +10,22 @@ import json
 # Get Tines WebHookURL from the environment variables and validate it
 def GetPluginParams():
   env_vars = os.environ
-
+  params = {}
   WebHookURL = str(env_vars.get("NOTIFY_PARAMETER_1"))
 
   # "None", if not in the environment variables
   if (WebHookURL == "None"):
-          print("GChat-plugin: Mandatory first parameter is missing: Webhook URL")
-          return 2, ""    # do not return anything, create final error
+      print("GChat-plugin: Mandatory first parameter is missing: Webhook URL")
+  else:
+      params["webhookurl"] = WebHookURL
 
-  return 0, WebHookURL
+  site = str(env_vars.get("NOTIFY_PARAMETER_2"))
+  if (site == "None"):
+      params["site"] = ""
+  else:
+      params["site"] = site
+
+  return params
 
 
 # Get the content of the message from the environment variables
@@ -79,10 +86,10 @@ def GetNotificationDetails():
 
 
 # Send the message to Google Chat
-def SendToGchat(WebHookURL, data):
+def SendToGchat(WebHookURL, site, data):
   return_code = 0
 
-  msg = []
+  msg = [ f"*Location*:\t {site}" ]
   for key,value in data.items():
       msg.append(f"*{key}*:\t {value}")
 
@@ -110,12 +117,12 @@ def SendToGchat(WebHookURL, data):
 
 def main():
         
-  return_code, WebHookURL = GetPluginParams()
-  if return_code != 0:
-    return return_code   # Abort, if parameter for the webhook is missing
+  params = GetPluginParams()
+  if "webhookurl" not in params:
+    return 2   # Abort, if parameter for the webhook is missing
 
   data = GetNotificationDetails()
-  return SendToGchat(WebHookURL, data)
+  return SendToGchat(params["webhookurl"], params["site"], data)
 
 if __name__ == '__main__':
         sys.exit(main())
